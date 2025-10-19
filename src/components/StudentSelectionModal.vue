@@ -11,7 +11,11 @@
       </div>
       
       <div class="modal-body">
-        <div class="students-table">
+        <div v-if="availableStudents.length === 0" class="empty-state">
+          <p>Нет доступных учеников для добавления</p>
+          <p class="empty-hint">Добавьте новых учеников через меню "Добавить ученика"</p>
+        </div>
+        <div v-else class="students-table">
           <div class="table-header">
             <div class="col-checkbox"></div>
             <div class="col-name">ФИО</div>
@@ -228,6 +232,21 @@ export default {
 .col-class {
   color: #666;
   font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #666;
+}
+
+.empty-state p {
+  margin-bottom: 0.5rem;
+}
+
+.empty-hint {
+  font-size: 0.9rem;
+  color: #999;
 }
 
 .modal-footer {

@@ -136,13 +136,15 @@ export default {
       'validateGroupForm',
       'createNewGroup',
       'clearNewGroupForm',
-      'fetchAvailableStudents'
+      'fetchAvailableStudents',
+      'loadStudentsFromLocalStorage'
     ]),
     updateFormData() {
       this.setNewGroupForm(this.formData)
       this.validateGroupForm(this.formData)
     },
     openStudentSelectionModal() {
+      this.loadStudentsFromLocalStorage() // Загружаем учеников перед показом модального окна
       this.fetchAvailableStudents()
       this.toggleStudentSelectionModal(true)
     },
@@ -175,6 +177,8 @@ export default {
   mounted() {
     // Инициализируем форму данными из store
     this.formData = { ...this.newGroupForm }
+    // Загружаем учеников из localStorage при монтировании компонента
+    this.loadStudentsFromLocalStorage()
   }
 }
 </script>

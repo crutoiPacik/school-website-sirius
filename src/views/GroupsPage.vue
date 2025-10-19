@@ -255,6 +255,10 @@ export default {
   background: linear-gradient(135deg, #6C757D, #495057);
 }
 
+.group-card.hufflepuff {
+  background: linear-gradient(135deg, #FFC107, #FF9800);
+}
+
 .group-icon {
   position: absolute;
   top: 1rem;

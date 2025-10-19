@@ -127,13 +127,15 @@ export default {
       'addStudentsToGroup',
       'updateGroupDetails',
       'toggleAddStudentModal',
-      'toggleEditGroupModal'
+      'toggleEditGroupModal',
+      'loadStudentsFromLocalStorage'
     ]),
     toggleTaskStatus(taskId, currentStatus) {
       const newStatus = currentStatus === 'completed' ? 'not_completed' : 'completed'
       this.updateTaskStatus({ taskId, status: newStatus })
     },
     openAddStudentModal() {
+      this.loadStudentsFromLocalStorage() // Загружаем учеников перед показом модального окна
       this.fetchAvailableStudents()
       this.toggleAddStudentModal(true)
     },
@@ -158,6 +160,8 @@ export default {
   mounted() {
     const groupId = this.$route.params.id
     this.fetchGroupDetails(groupId)
+    // Загружаем учеников из localStorage при монтировании компонента
+    this.loadStudentsFromLocalStorage()
   }
 }
 </script>

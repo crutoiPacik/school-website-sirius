@@ -113,14 +113,14 @@ const store = createStore({
     },
     ADD_GROUP(state, group) {
       state.groups.push(group)
-      // Сохраняем в localStorage
-      localStorage.setItem('school-groups', JSON.stringify(state.groups))
     },
     UPDATE_GROUP_SCORE(state, { groupId, score }) {
       const group = state.groups.find(g => g.id === groupId)
       if (group) {
         group.score = score
-        localStorage.setItem('school-groups', JSON.stringify(state.groups))
+        // Сохраняем только пользовательские группы
+        const customGroups = state.groups.filter(g => g.id > 3)
+        localStorage.setItem('school-groups', JSON.stringify(customGroups))
       }
     },
     LOAD_GROUPS_FROM_STORAGE(state) {
@@ -128,10 +128,14 @@ const store = createStore({
       if (storedGroups) {
         try {
           const parsedGroups = JSON.parse(storedGroups)
-          // Объединяем статические группы с сохраненными
-          const staticGroups = state.groups.slice(0, 3) // Первые 3 - статические
-          const customGroups = parsedGroups.filter(g => g.id > 3) // Пользовательские группы
-          state.groups = [...staticGroups, ...customGroups]
+          // Объединяем статические группы с сохраненными пользовательскими группами
+          const staticGroupIds = [1, 2, 3] // ID статических групп
+          const customGroups = parsedGroups.filter(g => !staticGroupIds.includes(g.id))
+          // Удаляем дубликаты по ID
+          const uniqueCustomGroups = customGroups.filter((group, index, self) => 
+            index === self.findIndex((g) => g.id === group.id)
+          )
+          state.groups = [...state.groups.filter(g => staticGroupIds.includes(g.id)), ...uniqueCustomGroups]
         } catch (error) {
           console.error('Ошибка загрузки групп из localStorage:', error)
         }
@@ -382,35 +386,56 @@ const store = createStore({
         commit('SET_GROUP_STUDENTS', students)
       }
     },
-    fetchAvailableStudents({ commit }) {
-      const availableStudents = [
+    fetchAvailableStudents({ commit, state }) {
+      // Загружаем захардкоженных учеников
+      const defaultStudents = [
         {
           id: 6,
           name: 'Харитонов Андрей Романович',
-          class: '10.2'
+          class: '10.2',
+          score: 0
         },
         {
           id: 7,
           name: 'Бондаренко Алексей Игоревич',
-          class: '10.2'
+          class: '10.2',
+          score: 0
         },
         {
           id: 8,
           name: 'Пашкина Лариса Николаевна',
-          class: '10.2'
+          class: '10.2',
+          score: 0
         },
         {
           id: 9,
           name: 'Алексеева Кристина Аркадьевна',
-          class: '10.2'
+          class: '10.2',
+          score: 0
         },
         {
           id: 10,
           name: 'Елизаров Даниил Александрович',
-          class: '10.2'
+          class: '10.2',
+          score: 0
         }
       ]
-      commit('SET_AVAILABLE_STUDENTS', availableStudents)
+      
+      // Добавляем учеников из allStudents (которые были добавлены через форму)
+      const customStudents = state.allStudents.map(student => ({
+        id: student.id,
+        name: student.fullName,
+        class: student.class,
+        score: student.score
+      }))
+      
+      // Объединяем всех учеников и убираем дубликаты
+      const allAvailableStudents = [...defaultStudents, ...customStudents]
+      const uniqueStudents = allAvailableStudents.filter((student, index, self) => 
+        index === self.findIndex((s) => s.id === student.id)
+      )
+      
+      commit('SET_AVAILABLE_STUDENTS', uniqueStudents)
     },
     addStudentsToGroup({ commit }, students) {
       commit('ADD_STUDENTS_TO_GROUP', students)
@@ -472,23 +497,31 @@ const store = createStore({
       return Object.values(validation).every(error => error === '')
     },
     createNewGroup({ commit, state }, groupData) {
+      // Генерируем случайный цвет и иконку для новой группы
+      const colors = [
+        { colorClass: 'gryffindor', iconComponent: 'StarIcon' },
+        { colorClass: 'slytherin', iconComponent: 'ShieldIcon' },
+        { colorClass: 'ravenclaw', iconComponent: 'DocumentIcon' },
+        { colorClass: 'hufflepuff', iconComponent: 'StarIcon' }
+      ]
+      const randomColor = colors[Math.floor(Math.random() * colors.length)]
+      
       const newGroup = {
         id: Date.now(),
         name: groupData.name,
         description: groupData.description,
         studentsCount: state.selectedStudents.length,
         score: state.selectedStudents.reduce((sum, student) => sum + (student.score || 0), 0),
-        colorClass: 'hufflepuff',
-        iconComponent: 'StarIcon'
+        colorClass: randomColor.colorClass,
+        iconComponent: randomColor.iconComponent
       }
       
       commit('ADD_GROUP', newGroup)
       commit('CLEAR_NEW_GROUP_FORM')
       
-      // Сохраняем в localStorage
-      const storedGroups = JSON.parse(localStorage.getItem('school-groups') || '[]')
-      storedGroups.push(newGroup)
-      localStorage.setItem('school-groups', JSON.stringify(storedGroups))
+      // Сохраняем все группы (кроме статических) в localStorage
+      const customGroups = state.groups.filter(g => g.id > 3)
+      localStorage.setItem('school-groups', JSON.stringify(customGroups))
       
       return newGroup
     },

@@ -11,9 +11,13 @@
       </div>
       
       <div class="modal-body">
-        <div class="students-list">
+        <div v-if="availableStudentsForGroup.length === 0" class="empty-state">
+          <p>Нет доступных учеников для добавления</p>
+          <p class="empty-hint">Добавьте новых учеников через меню "Добавить ученика" или все ученики уже в группе</p>
+        </div>
+        <div v-else class="students-list">
           <div 
-            v-for="student in availableStudents" 
+            v-for="student in availableStudentsForGroup" 
             :key="student.id" 
             class="student-item"
             :class="{ selected: selectedStudents.includes(student.id) }"
@@ -213,6 +217,21 @@ export default {
 .student-class {
   font-size: 0.9rem;
   color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #666;
+}
+
+.empty-state p {
+  margin-bottom: 0.5rem;
+}
+
+.empty-hint {
+  font-size: 0.9rem;
+  color: #999;
 }
 
 .modal-footer {
