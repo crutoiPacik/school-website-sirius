@@ -50,16 +50,36 @@
           </button>
         </div>
       </div>
-      
-      <button class="add-student-btn" @click="openAddStudentModal">
-        Добавить ученика
-      </button>
     </div>
     
     <div class="group-rating-section">
       <div class="section-header">
         <h2>Рейтинг</h2>
-        <button class="sort-btn">Сортировать</button>
+        <div class="header-actions">
+          <div class="search-box">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Поиск ученика..."
+              class="search-input"
+            >
+            <button 
+              v-if="searchQuery" 
+              @click="searchQuery = ''" 
+              class="clear-search-btn"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </button>
+          </div>
+          <button class="add-student-btn" @click="openAddStudentModal">
+            Добавить ученика
+          </button>
+        </div>
       </div>
       
       <div class="rating-table">
@@ -70,7 +90,7 @@
           <div class="col-points">Количество баллов</div>
         </div>
         <div 
-          v-for="(student, index) in sortedGroupStudents" 
+          v-for="(student, index) in filteredStudents" 
           :key="student.id" 
           class="table-row"
           :class="{ 'top-three': index < 3 }"
@@ -84,6 +104,10 @@
               <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
             </svg>
           </div>
+        </div>
+        <div v-if="filteredStudents.length === 0" class="empty-state">
+          <p>Ученики не найдены</p>
+          <p class="empty-hint">Попробуйте изменить условия поиска</p>
         </div>
       </div>
     </div>
@@ -115,9 +139,24 @@ export default {
     AddStudentModal,
     EditGroupModal
   },
+  data() {
+    return {
+      searchQuery: ''
+    }
+  },
   computed: {
     ...mapState(['currentGroup', 'groupTasks', 'isAddStudentModalOpen', 'isEditGroupModalOpen']),
-    ...mapGetters(['sortedGroupStudents'])
+    ...mapGetters(['sortedGroupStudents']),
+    filteredStudents() {
+      if (!this.searchQuery.trim()) {
+        return this.sortedGroupStudents
+      }
+      const query = this.searchQuery.toLowerCase().trim()
+      return this.sortedGroupStudents.filter(student => 
+        student.name.toLowerCase().includes(query) ||
+        student.class.toLowerCase().includes(query)
+      )
+    }
   },
   methods: {
     ...mapActions([
@@ -232,20 +271,68 @@ export default {
   margin: 0;
 }
 
-.sort-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s ease;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.sort-btn:hover {
-  background-color: #2980b9;
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  min-width: 300px;
+  transition: border-color 0.3s ease;
 }
+
+.search-box:focus-within {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.search-icon {
+  color: #666;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: #2c3e50;
+  background: transparent;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+}
+
+.clear-search-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
 
 .tasks-container {
   display: flex;
@@ -313,18 +400,20 @@ export default {
 }
 
 .add-student-btn {
-  background-color: #3498db;
+  background-color: #20C997;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1.5rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
+  font-weight: 500;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 .add-student-btn:hover {
-  background-color: #2980b9;
+  background-color: #1ba085;
 }
 
 .rating-table {
@@ -380,10 +469,47 @@ export default {
   color: #27ae60;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #666;
+  grid-column: 1 / -1;
+}
+
+.empty-state p {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.empty-hint {
+  font-size: 0.9rem;
+  color: #999;
+}
+
 @media (max-width: 768px) {
   .group-details-page {
     margin-left: 0;
     padding: 1rem;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .search-box {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .add-student-btn {
+    width: 100%;
   }
   
   .tasks-container {
