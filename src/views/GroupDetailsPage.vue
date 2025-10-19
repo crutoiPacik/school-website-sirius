@@ -55,7 +55,15 @@
     <div class="group-rating-section">
       <div class="section-header">
         <h2>Рейтинг</h2>
-        <div class="header-actions">
+        
+        <div class="header-controls">
+          <select v-model="sortBy" class="sort-select">
+            <option value="" disabled>Сортировать по</option>
+            <option value="score">По баллам</option>
+            <option value="name">По имени</option>
+            <option value="birthDate">По дате рождения</option>
+          </select>
+          
           <div class="search-box">
             <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -76,6 +84,7 @@
               </svg>
             </button>
           </div>
+          
           <button class="add-student-btn" @click="openAddStudentModal">
             Добавить ученика
           </button>
@@ -141,18 +150,46 @@ export default {
   },
   data() {
     return {
-      searchQuery: ''
+      searchQuery: '',
+      sortBy: '' // По умолчанию placeholder "Сортировать по"
     }
   },
   computed: {
     ...mapState(['currentGroup', 'groupTasks', 'isAddStudentModalOpen', 'isEditGroupModalOpen']),
     ...mapGetters(['sortedGroupStudents']),
+    sortedStudents() {
+      // Сначала применяем сортировку
+      const students = [...this.sortedGroupStudents]
+      
+      switch (this.sortBy) {
+        case 'name':
+          // Сортировка по имени (алфавитный порядок)
+          return students.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+        
+        case 'birthDate':
+          // Сортировка по дате рождения (если есть данные)
+          return students.sort((a, b) => {
+            // Если нет данных о дате рождения, используем сортировку по умолчанию
+            if (!a.birthDate || !b.birthDate) return 0
+            return new Date(a.birthDate) - new Date(b.birthDate)
+          })
+        
+        case 'score':
+          // Сортировка по баллам (по убыванию)
+          return students.sort((a, b) => b.score - a.score)
+        
+        default:
+          // Если не выбрано - показываем как есть (по баллам из sortedGroupStudents)
+          return students
+      }
+    },
     filteredStudents() {
+      // Применяем поисковый фильтр к отсортированным данным
       if (!this.searchQuery.trim()) {
-        return this.sortedGroupStudents
+        return this.sortedStudents
       }
       const query = this.searchQuery.toLowerCase().trim()
-      return this.sortedGroupStudents.filter(student => 
+      return this.sortedStudents.filter(student => 
         student.name.toLowerCase().includes(query) ||
         student.class.toLowerCase().includes(query)
       )
@@ -262,6 +299,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .section-header h2 {
@@ -271,10 +310,45 @@ export default {
   margin: 0;
 }
 
-.header-actions {
+.header-controls {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.sort-select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 200px;
+}
+
+.sort-select:hover {
+  border-color: #3498db;
+}
+
+.sort-select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.sort-select option[disabled] {
+  color: #999;
 }
 
 .search-box {
@@ -494,13 +568,23 @@ export default {
   
   .section-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 1rem;
   }
   
-  .header-actions {
+  .section-header h2 {
     width: 100%;
+  }
+  
+  .header-controls {
     flex-direction: column;
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .sort-select {
+    width: 100%;
+    min-width: auto;
   }
   
   .search-box {
