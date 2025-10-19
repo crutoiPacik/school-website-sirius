@@ -5,36 +5,30 @@
     </div>
     
     <div class="group-form-section">
-      <div class="form-group">
-        <label for="groupName">Название</label>
-        <div class="input-container">
-          <input 
-            type="text" 
-            id="groupName" 
-            v-model="formData.name" 
-            placeholder="Введите название группы"
-            @input="updateFormData"
-            :class="{ error: formValidation.name }"
-          >
-          <span class="char-counter">{{ formData.name.length }}</span>
-        </div>
-        <div v-if="formValidation.name" class="error-message">{{ formValidation.name }}</div>
-      </div>
+      <FormInput
+        id="groupName"
+        label="Название"
+        v-model="formData.name"
+        placeholder="Введите название группы"
+        :required="true"
+        :showCounter="true"
+        :maxLength="50"
+        :error="formValidation.name"
+        @input="updateFormData"
+      />
       
-      <div class="form-group">
-        <label for="groupDescription">Описание группы</label>
-        <div class="input-container">
-          <textarea 
-            id="groupDescription" 
-            v-model="formData.description" 
-            placeholder="Введите описание группы"
-            @input="updateFormData"
-            :class="{ error: formValidation.description }"
-          ></textarea>
-          <span class="char-counter">{{ formData.description.length }}</span>
-        </div>
-        <div v-if="formValidation.description" class="error-message">{{ formValidation.description }}</div>
-      </div>
+      <FormTextarea
+        id="groupDescription"
+        label="Описание группы"
+        v-model="formData.description"
+        placeholder="Введите описание группы"
+        :required="true"
+        :showCounter="true"
+        :maxLength="500"
+        :rows="4"
+        :error="formValidation.description"
+        @input="updateFormData"
+      />
     </div>
     
     <div class="students-section">
@@ -87,14 +81,14 @@
     </div>
     
     <div class="action-buttons">
-      <button class="btn btn-secondary" @click="cancel">Отменить</button>
-      <button 
-        class="btn btn-primary" 
+      <Button variant="secondary" @click="cancel">Отменить</Button>
+      <Button 
+        variant="primary" 
         @click="createGroup"
         :disabled="!canCreateGroup"
       >
         Создать группу
-      </button>
+      </Button>
     </div>
     
     <!-- Модальное окно выбора учеников -->
@@ -109,11 +103,17 @@
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
 import StudentSelectionModal from '../components/StudentSelectionModal.vue'
+import FormInput from '../components/FormInput.vue'
+import FormTextarea from '../components/FormTextarea.vue'
+import Button from '../components/Button.vue'
 
 export default {
   name: 'CreateGroupPage',
   components: {
-    StudentSelectionModal
+    StudentSelectionModal,
+    FormInput,
+    FormTextarea,
+    Button
   },
   data() {
     return {
@@ -199,63 +199,6 @@ export default {
 
 .group-form-section {
   margin-bottom: 3rem;
-}
-
-.form-group {
-  margin-bottom: 2rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.input-container {
-  position: relative;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: border-color 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.form-group input.error,
-.form-group textarea.error {
-  border-color: #e74c3c;
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.char-counter {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.error-message {
-  color: #e74c3c;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
 }
 
 .students-section h2 {
@@ -368,39 +311,6 @@ export default {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 3rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: #20C997;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #1ba085;
-}
-
-.btn-secondary {
-  background-color: white;
-  color: #666;
-  border: 1px solid #ddd;
-}
-
-.btn-secondary:hover {
-  background-color: #f8f9fa;
 }
 
 @media (max-width: 768px) {
