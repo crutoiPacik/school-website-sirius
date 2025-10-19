@@ -64,25 +64,53 @@
             <option value="birthDate">По дате рождения</option>
           </select>
           
-          <div class="search-box">
+          <div class="search-box" v-click-outside="closeSearchDropdown">
             <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
             <input 
               type="text" 
               v-model="searchQuery" 
+              @focus="showSearchDropdown = true"
+              @input="onSearchInput"
               placeholder="Поиск ученика..."
               class="search-input"
+              autocomplete="off"
             >
             <button 
               v-if="searchQuery" 
-              @click="searchQuery = ''" 
+              @click="clearSearch" 
               class="clear-search-btn"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
               </svg>
             </button>
+            
+            <!-- Dropdown со списком учеников -->
+            <div v-if="showSearchDropdown && searchResults.length > 0" class="search-dropdown">
+              <div 
+                v-for="student in searchResults" 
+                :key="student.id"
+                class="search-dropdown-item"
+                @click="selectStudent(student)"
+              >
+                <div class="student-info-dropdown">
+                  <div class="student-name-dropdown">{{ student.name }}</div>
+                  <div class="student-details">
+                    <span class="student-class-dropdown">{{ student.class }}</span>
+                    <span class="student-score-dropdown">{{ student.score }} баллов</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Сообщение если ничего не найдено -->
+            <div v-if="showSearchDropdown && searchQuery && searchResults.length === 0" class="search-dropdown">
+              <div class="search-no-results">
+                Ничего не найдено
+              </div>
+            </div>
           </div>
           
           <button class="add-student-btn" @click="openAddStudentModal">
@@ -113,10 +141,6 @@
               <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
             </svg>
           </div>
-        </div>
-        <div v-if="filteredStudents.length === 0" class="empty-state">
-          <p>Ученики не найдены</p>
-          <p class="empty-hint">Попробуйте изменить условия поиска</p>
         </div>
       </div>
     </div>
@@ -151,14 +175,15 @@ export default {
   data() {
     return {
       searchQuery: '',
-      sortBy: '' // По умолчанию placeholder "Сортировать по"
+      sortBy: '', // По умолчанию placeholder "Сортировать по"
+      showSearchDropdown: false
     }
   },
   computed: {
     ...mapState(['currentGroup', 'groupTasks', 'isAddStudentModalOpen', 'isEditGroupModalOpen']),
     ...mapGetters(['sortedGroupStudents']),
     sortedStudents() {
-      // Сначала применяем сортировку
+      // Применяем сортировку к списку учеников
       const students = [...this.sortedGroupStudents]
       
       switch (this.sortBy) {
@@ -183,16 +208,20 @@ export default {
           return students
       }
     },
-    filteredStudents() {
-      // Применяем поисковый фильтр к отсортированным данным
+    searchResults() {
+      // Результаты поиска для dropdown - НЕ влияет на основной список
       if (!this.searchQuery.trim()) {
-        return this.sortedStudents
+        return []
       }
       const query = this.searchQuery.toLowerCase().trim()
-      return this.sortedStudents.filter(student => 
+      return this.sortedGroupStudents.filter(student => 
         student.name.toLowerCase().includes(query) ||
         student.class.toLowerCase().includes(query)
-      )
+      ).slice(0, 10) // Ограничиваем до 10 результатов
+    },
+    filteredStudents() {
+      // Основной список - теперь только с сортировкой, БЕЗ фильтрации поиском
+      return this.sortedStudents
     }
   },
   methods: {
@@ -231,6 +260,40 @@ export default {
     saveGroupDetails({ name, description }) {
       this.updateGroupDetails({ name, description })
       this.closeEditGroupModal()
+    },
+    onSearchInput() {
+      // Показываем dropdown при вводе
+      this.showSearchDropdown = true
+    },
+    selectStudent(student) {
+      // При выборе ученика просто закрываем dropdown (ничего не делаем)
+      this.showSearchDropdown = false
+      // Можно добавить какое-то действие в будущем, пока ничего не делаем
+    },
+    closeSearchDropdown() {
+      // Закрываем dropdown
+      this.showSearchDropdown = false
+    },
+    clearSearch() {
+      // Очищаем поиск и закрываем dropdown
+      this.searchQuery = ''
+      this.showSearchDropdown = false
+    }
+  },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function(event) {
+          // Проверяем что клик был вне элемента
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value()
+          }
+        }
+        document.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.removeEventListener('click', el.clickOutsideEvent)
+      }
     }
   },
   mounted() {
@@ -361,11 +424,75 @@ export default {
   padding: 0.5rem 0.75rem;
   min-width: 300px;
   transition: border-color 0.3s ease;
+  z-index: 100;
 }
 
 .search-box:focus-within {
   border-color: #3498db;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.search-dropdown-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.search-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.student-info-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.student-name-dropdown {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.student-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.student-class-dropdown {
+  color: #666;
+}
+
+.student-score-dropdown {
+  color: #27ae60;
+  font-weight: 500;
+}
+
+.search-no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
 }
 
 .search-icon {
