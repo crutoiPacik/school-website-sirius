@@ -279,7 +279,7 @@ export default {
 
 .add-group-card {
   padding: 1.5rem;
-  border: 2px dashed #ccc;
+  border: 2px dashed #B2EBF2;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -288,13 +288,13 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   min-height: 120px;
-  color: #666;
+  color: #006064;
 }
 
 .add-group-card:hover {
-  border-color: #3498db;
-  color: #3498db;
-  background-color: #f8f9fa;
+  border-color: #00ACC1;
+  color: #00838F;
+  background-color: #E0F7FA;
 }
 
 .add-icon {
